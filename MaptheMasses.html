@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      #map {
+        width: 95%;
+        height: 500px;
+        margin: 0 auto 0 auto;
+      }
+
+      body {
+        background-color: #ffb84d;
+      }
+      #floating-panel {
+        position: absolute;
+        top: 10px;
+        left: 10%;
+        right: 10%;
+        z-index: 5;
+        background-color: #fff;
+        padding: 5px;
+        border: 2px solid #000;
+        text-align: center;
+        font-family: 'Roboto','sans-serif';
+        line-height: 30px;
+        padding-left: 10px;
+      }
+
+    </style>
+    <script src="jquery-3.2.0.min.js"></script>
+  </head>
+  <body>
+    <div id="floating-panel">
+      <button onclick="toggleHeatmap()">Crowds</button>
+      <button onclick="toggleCrosswalks()">Crosswalks</button>
+      <button onclick="toggleStreets()">Walkable Streets</button>
+      <button onclick="reposition()">Return to Center</button>
+    </div>
+    <div id="map"></div>
+    <div id="distance"></div>
+    <script>
+      var map;
+      var heatmap;
+      var princeton;
+      var locations = [];
+      var crosswalks = [];
+      var walkable = [];
+      var marked = [];
+      var streets = [];
+      var cross = 0;
+      var walk = 0;
+      var lat;
+      var lon;
+
+      function initMap() {
+        princeton = {lat: 40.346333, lng: -74.657510 };
+        map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 16,
+          center: princeton,
+          scrollwheel: false,
+          navigationControl: false,
+          mapTypeControl: false,
+          scaleControl: false,
+          clickableIcons: false,
+          disableDoubleClickZoom: true,
+          streetViewControl: false,
+          zoomControl: false,
+          maxZoom: 16,
+          minZoom: 16,
+          styles: [
+            {
+              featureType: "poi.business",
+              elementType: "labels",
+              stylers: [
+                { visibility: "off" }
+              ]
+            }
+          ]
+        });
+
+        // Initialize streets
+        var WaStreet = new google.maps.Polyline({
+            path: [
+              new google.maps.LatLng(40.350368, -74.657069),
+              new google.maps.LatLng(40.341158, -74.649800)
+            ],
+            geodesic: true,
+            strokeColor: '#4286f4',
+            strokeOpacity: 1.0,
+            strokeWeight: 2
+          });
+
+        streets.push(WaStreet);
+
+        var theStreet = new google.maps.Polyline({
+            path: [
+              new google.maps.LatLng(40.347823, -74.655001),
+              new google.maps.LatLng(40.349818, -74.647663)
+            ],
+            geodesic: true,
+            strokeColor: '#4286f4',
+            strokeOpacity: 1.0,
+            strokeWeight: 2
+          });
+
+        streets.push(theStreet);
+
+        var nas = new google.maps.Polyline({
+            path: [
+              new google.maps.LatLng(40.348738, -74.663067),
+              new google.maps.LatLng(40.350386, -74.657111),
+              new google.maps.LatLng(40.351860, -74.652495)
+            ],
+            geodesic: true,
+            strokeColor: '#4286f4',
+            strokeOpacity: 1.0,
+            strokeWeight: 2
+          });
+
+        streets.push(nas);
+
+        var olden = new google.maps.Polyline({
+            path: [
+              new google.maps.LatLng(40.351818, -74.652478),
+              new google.maps.LatLng(40.348906, -74.651117)
+            ],
+            geodesic: true,
+            strokeColor: '#4286f4',
+            strokeOpacity: 1.0,
+            strokeWeight: 2
+          });
+
+        streets.push(olden);
+
+         var will = new google.maps.Polyline({
+            path: [
+              new google.maps.LatLng(40.349406, -74.656276),
+              new google.maps.LatLng(40.350844, -74.652048)
+            ],
+            geodesic: true,
+            strokeColor: '#4286f4',
+            strokeOpacity: 1.0,
+            strokeWeight: 2
+          });
+
+        streets.push(will);
+
+        var noname = new google.maps.Polyline({
+            path: [
+              new google.maps.LatLng(40.351354, -74.654067),
+              new google.maps.LatLng(40.349106, -74.652825)
+            ],
+            geodesic: true,
+            strokeColor: '#4286f4',
+            strokeOpacity: 1.0,
+            strokeWeight: 2
+          });
+
+        streets.push(noname);
+
+
+        // Load JSON file of location data
+        $.getJSON("https://bchangs.github.io/mtmData.json", function(data) {
+          async: false;
+            
+          $.each(data.Data, function(user, dates) {
+            $.each(dates, function( entry, coord ) {
+              $.each(coord, function( key, val ) {
+                  
+                if (val.split(" ").length > 1) {
+                  if (val.split(" ").length < 6) {
+                    lat = parseFloat(val.split(" ")[2]);
+                    lon = parseFloat(val.split(" ")[3]);
+                  }
+                  else {
+                    lat = parseFloat(val.split(" ")[4]);
+                    lon = parseFloat(val.split(" ")[5]); 
+                  }
+                  lat = (Math.round(lat * 10000, -4));
+                  lon = (Math.round(lon * 10000, -4));
+                  if (lat % 2 != 0) {
+                    lat++;
+                  }
+                  lat = (lat / 10000).toString();
+                  if (lon % 2 != 0) {
+                    lon++;
+                  }
+                  lon = (lon / 10000).toString();
+                    point = lat + " "  + lon;
+
+                  if (point in locations) {
+                    if (marked[point] == null) {
+                      locations[point] += 1;
+                      marked[point] = 1;
+                    }
+                  }
+                  else {
+                    locations[point] = 1;
+                    marked[point] = 1;
+                  }
+                }
+              });
+            });
+            for (var key in marked) {
+              if (marked.hasOwnProperty(key)) {
+                marked[key] = null;
+              }
+            }          
+          });
+          mapData(data);
+          console.log(locations);
+        });
+      }
+
+      function mapData(data) {
+        var heatmapData = [];
+        var latLng;
+        var weightedLoc;
+
+        for (var key in locations) {
+          if (locations.hasOwnProperty(key)) {
+            lat = parseFloat(key.split(" ")[0]);
+            lon = parseFloat(key.split(" ")[1]);
+            latLng = new google.maps.LatLng(lat, lon);
+            weightedLoc = {
+              location: latLng,
+              weight: locations[key]
+            };
+            heatmapData.push(weightedLoc);
+          }
+        }
+
+        heatmap = new google.maps.visualization.HeatmapLayer({
+          data: heatmapData,
+          dissipating: true,
+          radius: 15,
+          map: map,
+          opacity: .3
+        });
+      }
+
+      function toggleHeatmap() {
+        heatmap.setMap(heatmap.getMap() ? null : map);
+      }
+
+      function toggleCrosswalks() {
+        if (cross == 0) {
+          for (var i = 0; i < streets.length; i ++) {
+            for(var key in locations) {
+              if (locations.hasOwnProperty(key)) {
+                lat = parseFloat(key.split(" ")[0]);
+                lon = parseFloat(key.split(" ")[1]);
+                latLng = new google.maps.LatLng(lat, lon);
+                if (google.maps.geometry.poly.isLocationOnEdge(latLng, streets[i], 2e-5)) {
+                  var marker = new google.maps.Marker({
+                    position: {lat: lat, lng: lon },
+                    label: "c",
+                    map: map
+                  });
+                  crosswalks.push(marker);
+                }
+              }
+            }
+          }
+          cross = 1;
+        }
+        else {
+          for (var i = 0; i < crosswalks.length; i++) {
+            crosswalks[i].setMap(null);
+          }
+          cross = 0;
+        }
+      }
+
+      function toggleStreets() {
+        if (walk == 0) {
+          for (var i = 0; i < streets.length; i++) {
+            for(var key in locations) {
+              if (locations.hasOwnProperty(key)) {
+                lat = parseFloat(key.split(" ")[0]);
+                lon = parseFloat(key.split(" ")[1]);
+                latLng = new google.maps.LatLng(lat, lon);
+                if (google.maps.geometry.poly.isLocationOnEdge(latLng, streets[i], 10e-5)) {
+                  walkable.push(streets[i]);
+                }
+              }
+            }
+          }
+          for(var i = 0; i < walkable.length; i++) {
+            walkable[i].setMap(map);
+          }
+          walk = 1;
+        }
+        else {
+          for (var i = 0; i < walkable.length; i++) {
+            walkable[i].setMap(null);
+          }
+          walk = 0;
+        }
+      }
+
+      function reposition() {
+        map.setCenter(princeton);
+      }
+
+    </script>
+     <script async defer
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC5zi14vIhsTPj5VUm6c-yVqwUZ4Tb86B8&libraries=visualization&callback=initMap">
+    </script>
+  </body>
+</html>

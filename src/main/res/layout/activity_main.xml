@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.graphhopper.android.MainActivity"
+    >
+
+    <Button
+        android:id="@+id/my_button_path"
+        android:layout_width="200dp"
+        android:layout_height="70dp"
+        android:backgroundTint="@android:color/holo_orange_light"
+        android:layout_below="@+id/my_button_map"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="30dp" />
+
+    <Button
+        android:id="@+id/my_button_map"
+        android:layout_width="200dp"
+        android:layout_height="70dp"
+        android:backgroundTint="@android:color/holo_orange_light"
+        android:layout_marginTop="45dp"
+        android:layout_below="@+id/my_button"
+        android:layout_alignStart="@+id/my_button_path" />
+
+    <TextView
+        android:id="@+id/my_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="59dp"
+        android:text="Map the Masses"
+        android:textColor="@android:color/black"
+        android:textSize="30sp" />
+
+    <Button
+        android:id="@+id/my_button"
+        android:layout_width="200dp"
+        android:layout_height="70dp"
+        android:layout_marginTop="53dp"
+        android:backgroundTint="@android:color/holo_orange_light"
+        android:layout_below="@+id/my_text"
+        android:layout_alignStart="@+id/my_button_map" />
+
+
+</RelativeLayout>
